@@ -5,7 +5,20 @@ const getProfile = async (req, res) => {
   try {
     res.status(200).json({
       success: true,
-      user: req.user,
+      user: {
+        _id: req.user._id,
+        firstName: req.user.firstName,
+        lastName: req.user.lastName,
+        name: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone,
+        dob: req.user.dob,
+        role: req.user.role,
+        country: req.user.country,
+        city: req.user.city,
+        postalCode: req.user.postalCode,
+        profileImage: req.user.profileImage,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -18,16 +31,39 @@ const getProfile = async (req, res) => {
 // UPDATE PROFILE
 const updateProfile = async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      dob,
+      role,
+      country,
+      city,
+      postalCode,
+      profileImage,
+    } = req.body;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       {
-        name,
+        firstName,
+        lastName,
+
+        // Keep old name field for compatibility
+        name: `${firstName} ${lastName}`,
+
         email,
+        phone,
+        dob,
+        role,
+        country,
+        city,
+        postalCode,
+        profileImage,
       },
       {
-        returnDocument: "after",
+        new: true,
       },
     ).select("-password");
 
@@ -37,6 +73,8 @@ const updateProfile = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       success: false,
       message: "Server Error",

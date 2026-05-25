@@ -6,7 +6,7 @@ const User = require("../models/User");
 // SIGNUP
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     // Check existing user
     const existingUser = await User.findOne({ email });
@@ -23,11 +23,12 @@ const signup = async (req, res) => {
 
     // Create user
     const user = await User.create({
-      name,
+      firstName,
+      lastName,
+      name: `${firstName} ${lastName}`,
       email,
       password: hashedPassword,
     });
-
     // Create JWT Token
     const token = jwt.sign(
       {
@@ -45,6 +46,8 @@ const signup = async (req, res) => {
       token,
       user: {
         id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         name: user.name,
         email: user.email,
       },
@@ -101,8 +104,17 @@ const login = async (req, res) => {
       token,
       user: {
         id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        dob: user.dob,
+        role: user.role,
+        country: user.country,
+        city: user.city,
+        postalCode: user.postalCode,
+        profileImage: user.profileImage,
       },
     });
   } catch (error) {

@@ -2,9 +2,20 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    firstName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    lastName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
     name: {
       type: String,
-      required: true,
       trim: true,
     },
 
@@ -20,6 +31,41 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
+    },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    dob: {
+      type: String,
+      default: "",
+    },
+
+    role: {
+      type: String,
+      default: "Farmer",
+    },
+
+    country: {
+      type: String,
+      default: "",
+    },
+
+    city: {
+      type: String,
+      default: "",
+    },
+
+    postalCode: {
+      type: String,
+      default: "",
+    },
+
+    profileImage: {
+      type: String,
+      default: "",
     },
   },
   {

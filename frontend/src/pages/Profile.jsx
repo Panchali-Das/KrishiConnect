@@ -6,12 +6,19 @@ function Profile() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
+    phone: "",
+    dob: "",
+    role: "",
+    country: "",
+    city: "",
+    postalCode: "",
+    profileImage: "",
   });
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   // Fetch Profile
   useEffect(() => {
@@ -26,8 +33,16 @@ function Profile() {
         });
 
         setFormData({
-          name: response.data.user.name,
-          email: response.data.user.email,
+          firstName: response.data.user.firstName || "",
+          lastName: response.data.user.lastName || "",
+          email: response.data.user.email || "",
+          phone: response.data.user.phone || "",
+          dob: response.data.user.dob || "",
+          role: response.data.user.role || "Farmer",
+          country: response.data.user.country || "",
+          city: response.data.user.city || "",
+          postalCode: response.data.user.postalCode || "",
+          profileImage: response.data.user.profileImage || "",
         });
       } catch (error) {
         console.error(error);
@@ -57,8 +72,16 @@ function Profile() {
       const response = await UserAPI.put(
         "/profile",
         {
-          name: formData.name,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
+          phone: formData.phone,
+          dob: formData.dob,
+          role: formData.role,
+          country: formData.country,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          profileImage: formData.profileImage,
         },
         {
           headers: {
@@ -70,8 +93,6 @@ function Profile() {
       // Update localStorage
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      setMessage("Profile updated successfully!");
-
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -80,59 +101,176 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center p-6">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center text-4xl">
-            🌿
-          </div>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-green-800">My Profile</h1>
+        {/* Top Profile Card */}
+        <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-6">
+          <img
+            src={formData.profileImage || "https://i.pravatar.cc/150?img=12"}
+            alt="profile"
+            className="w-24 h-24 rounded-full object-cover border-4 border-green-100"
+          />
 
-          <h2 className="text-2xl font-bold mt-4 text-gray-800">My Profile</h2>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {formData.firstName} {formData.lastName}
+            </h2>
+
+            <p className="text-gray-500">{formData.role}</p>
+
+            <p className="text-sm text-gray-400">
+              {formData.city}, {formData.country}
+            </p>
+          </div>
         </div>
 
-        {message && (
-          <div className="mb-4 bg-green-100 text-green-700 p-3 rounded-xl text-sm">
-            {message}
-          </div>
-        )}
+        {/* Personal Information */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-semibold text-green-800">
+              Personal Information
+            </h3>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium mb-2">Name</label>
-
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            <button className="bg-orange-400 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm">
+              Edit
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition"
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
-            {loading ? "Saving..." : "Save Changes"}
-          </button>
-        </form>
+            <div>
+              <label className="text-sm text-gray-500">First Name</label>
+
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">Last Name</label>
+
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">Date of Birth</label>
+
+              <input
+                type="date"
+                name="dob"
+                value={formData.dob}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">Email Address</label>
+
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">Phone Number</label>
+
+              <input
+                type="text"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">User Role</label>
+
+              <input
+                type="text"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div className="md:col-span-3 flex justify-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-xl"
+              >
+                {loading ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Address Section */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h3 className="text-xl font-semibold text-green-800 mb-6">Address</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="text-sm text-gray-500">Country</label>
+
+              <input
+                type="text"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">City</label>
+
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-500">Postal Code</label>
+
+              <input
+                type="text"
+                name="postalCode"
+                value={formData.postalCode}
+                onChange={handleChange}
+                className="w-full mt-2 border rounded-xl px-4 py-3"
+              />
+            </div>
+          </div>
+        </div>
 
         <button
           onClick={() => navigate("/dashboard")}
-          className="mt-6 w-full border border-gray-300 py-3 rounded-xl hover:bg-gray-100 transition"
+          className="bg-white border px-6 py-3 rounded-xl hover:bg-gray-50"
         >
           Back to Dashboard
         </button>

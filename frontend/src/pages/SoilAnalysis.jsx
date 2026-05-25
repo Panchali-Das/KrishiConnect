@@ -118,17 +118,6 @@ const SoilAnalysis = () => {
               recommendations tailored to your specific conditions.
             </p>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
-                <span className="text-green-50">98% Accuracy</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Database className="w-6 h-6 flex-shrink-0" />
-                <span className="text-green-50">Historical Data</span>
-              </div>
-            </div>
-
             <button
               onClick={resetForm}
               className="mt-8 w-full bg-white text-green-700 font-semibold py-3 rounded-lg hover:bg-green-50 transition-colors"
