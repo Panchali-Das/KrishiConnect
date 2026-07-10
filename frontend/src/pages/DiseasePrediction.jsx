@@ -1,20 +1,15 @@
 import { useState, useEffect } from "react";
-import {
-  Upload,
-  Image as ImageIcon,
-  AlertCircle,
-  Loader2,
-  ArrowLeft,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Leaf, X } from "lucide-react";
 import { diseaseInfo } from "../data/diseaseDatabase";
+import { useNavigate } from "react-router-dom";
 
 const DiseasePrediction = () => {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
   const [error, setError] = useState("");
   const [diseaseDetails, setDiseaseDetails] = useState(null);
   const [geminiLoading, setGeminiLoading] = useState(false);
@@ -35,7 +30,6 @@ const DiseasePrediction = () => {
   const handleFileChange = (e) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
-    console.log("File selected:", selected.name);
     setError("");
     setResult(null);
     setDiseaseDetails(null);
@@ -48,66 +42,37 @@ const DiseasePrediction = () => {
     setPreviewUrl("");
     setResult(null);
     setDiseaseDetails(null);
+    setError("");
   };
 
-  // Fetch treatment info from Gemini API (Direct approach)
+  // Fetch treatment from Gemini API — logic preserved exactly
   const fetchGeminiTreatment = async (disease) => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const prompt = `Provide a concise description (1-2 sentences) of the plant disease "${disease}" and suggest exactly 3 bullet point treatments. Format the response as:
-Description: [Your description]
-Treatments:
-- [Treatment 1]
-- [Treatment 2]
-- [Treatment 3]`;
+    const prompt = `Provide a concise description (1-2 sentences) of the plant disease "${disease}" and suggest exactly 3 bullet point treatments. Format the response as:\nDescription: [Your description]\nTreatments:\n- [Treatment 1]\n- [Treatment 2]\n- [Treatment 3]`;
 
     setGeminiLoading(true);
 
     try {
-      console.log("Sending request to Gemini API for disease:", disease);
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-          }),
-        },
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        }
       );
 
-      console.log("Gemini API response status:", response.status);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Gemini API error:", errorText);
-        throw new Error(
-          `Gemini API request failed with status ${response.status}`,
-        );
-      }
+      if (!response.ok) throw new Error(`Gemini API failed with status ${response.status}`);
 
       const data = await response.json();
-      console.log("Gemini API response data:", data);
-
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      if (!text) {
-        throw new Error("No valid response from Gemini API");
-      }
+      if (!text) throw new Error("No valid response from Gemini API");
 
-      console.log("=== RAW GEMINI TEXT ===");
-      console.log(text);
-
-      // Parse the response
-      const descriptionMatch = text.match(
-        /Description:\s*(.+?)(?=\nTreatments?:|$)/is,
-      );
+      const descriptionMatch = text.match(/Description:\s*(.+?)(?=\nTreatments?:|$)/is);
       const treatmentsText = text.split(/Treatments?:/i)[1];
 
-      const description = descriptionMatch
-        ? descriptionMatch[1].trim()
-        : "No description available.";
+      const description = descriptionMatch ? descriptionMatch[1].trim() : "No description available.";
 
       let treatments = [];
       if (treatmentsText) {
@@ -119,494 +84,471 @@ Treatments:
           .filter((line) => line.length > 0);
       }
 
-      if (treatments.length === 0) {
-        treatments = [
-          "Consult a local agricultural expert for treatment options.",
-        ];
-      }
+      if (treatments.length === 0) treatments = ["Consult a local agricultural expert for treatment options."];
 
-      console.log("=== PARSED RESULTS ===");
-      console.log("Description:", description);
-      console.log("Treatments:", treatments);
-
-      return {
-        description,
-        treatment: treatments,
-      };
+      return { description, treatment: treatments };
     } catch (error) {
       console.error("Error fetching from Gemini API:", error);
       return {
         description: "Unable to fetch description.",
-        treatment: [
-          "Consult a local agricultural expert for treatment options.",
-        ],
+        treatment: ["Consult a local agricultural expert for treatment options."],
       };
     } finally {
       setGeminiLoading(false);
     }
   };
 
-  // Fallback: Fetch disease info from local database
   const fetchLocalDiseaseInfo = (diseaseLabel) => {
-    // diseaseLabel comes like: Tomato___Late_blight
     const localData = diseaseInfo[diseaseLabel];
-
-    if (!localData) {
-      console.warn("Disease not found in local DB:", diseaseLabel);
-      return {
-        description: "No information available for this disease.",
-        treatment: [
-          "Consult a local agricultural expert for treatment options.",
-        ],
-      };
-    }
-
-    return {
-      description: localData.description,
-      treatment: localData.treatment,
-    };
+    if (!localData) return { description: "No information available.", treatment: ["Consult a local agricultural expert."] };
+    return { description: localData.description, treatment: localData.treatment };
   };
 
-  // CNN model prediction
+  // CNN model prediction — logic preserved exactly
   const handleAnalyze = async () => {
-    if (!file) {
-      setError("Upload an image first");
-      return;
-    }
-
+    if (!file) { setError("Please upload a plant image first"); return; }
     setLoading(true);
     setError("");
-    console.log("Starting analysis...");
+
+    const messages = [
+      "📸 Processing your image...",
+      "🔍 Scanning leaf patterns...",
+      "🤖 Running disease detection AI...",
+      "🌿 Fetching treatment advice...",
+    ];
+    let i = 0;
+    setLoadingMsg(messages[0]);
+    const interval = setInterval(() => {
+      i++;
+      if (i < messages.length) setLoadingMsg(messages[i]);
+    }, 800);
 
     try {
       const formData = new FormData();
       formData.append("image", file);
 
-      console.log("Sending request to CNN API...");
+      const response = await fetch("/predict", { method: "POST", body: formData });
 
-      const response = await fetch("/predict", {
-        method: "POST",
-        body: formData,
-      });
-
-      console.log("Response status:", response.status);
-
-      if (!response.ok) {
-        throw new Error(`Prediction API failed with status ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Prediction API failed with status ${response.status}`);
 
       const predictionData = await response.json();
-      console.log("Prediction data received:", predictionData);
-
       const diseaseLabel = predictionData.prediction || "Unknown Disease";
       let confidence = predictionData.confidence || 0;
+      if (confidence > 1) confidence = confidence / 100;
 
-      if (confidence > 1) {
-        confidence = confidence / 100;
-      }
-
-      console.log("Disease label:", diseaseLabel);
-      console.log("Confidence:", confidence);
-
-      const MIN_CONFIDENCE_THRESHOLD = 0.3;
-
-      if (confidence < MIN_CONFIDENCE_THRESHOLD) {
-        console.log("Confidence too low, showing invalid image message");
-        setError(
-          "Invalid or unclear image. Please upload a clear photo of a plant leaf.",
-        );
+      if (confidence < 0.3) {
+        setError("Image unclear or not a plant leaf. Please upload a clear photo of a leaf in good lighting.");
         setResult(null);
         setDiseaseDetails(null);
         return;
       }
 
-      setResult({
-        label: diseaseLabel,
-        confidence: confidence,
-      });
+      setResult({ label: diseaseLabel, confidence });
 
       const isHealthy = diseaseLabel.toLowerCase().includes("healthy");
-
       if (isHealthy) {
-        console.log("Plant is healthy");
-        setDiseaseDetails({
-          description: "Healthy leaf. No disease detected.",
-          treatment: ["No treatment required. The leaf is healthy."],
-        });
+        setDiseaseDetails({ description: "Your plant looks healthy! No disease detected.", treatment: ["Keep up current care routine.", "Monitor regularly for early signs.", "Ensure proper watering and nutrition."] });
         return;
       }
 
-      // Fetch disease info from Gemini (with local DB fallback)
-      console.log("Fetching disease information from Gemini...");
-      const cleanDiseaseName = diseaseLabel
-        .replace("___", " - ")
-        .replace(/_/g, " ");
-
+      const cleanDiseaseName = diseaseLabel.replace("___", " - ").replace(/_/g, " ");
       let diseaseInfoResult = await fetchGeminiTreatment(cleanDiseaseName);
 
-      // 🔁 Fallback to local DB if Gemini fails or quota expires
-      if (
-        !diseaseInfoResult ||
-        diseaseInfoResult.description?.includes("Unable to fetch") ||
-        !Array.isArray(diseaseInfoResult.treatment) ||
-        diseaseInfoResult.treatment.length === 0
-      ) {
-        console.warn(
-          "Gemini failed. Falling back to local disease database...",
-        );
+      if (!diseaseInfoResult || diseaseInfoResult.description?.includes("Unable to fetch") || !Array.isArray(diseaseInfoResult.treatment) || diseaseInfoResult.treatment.length === 0) {
         diseaseInfoResult = fetchLocalDiseaseInfo(diseaseLabel);
       }
 
       setDiseaseDetails(diseaseInfoResult);
     } catch (err) {
-      console.error("Error during analysis:", err);
       setError(`Analysis failed: ${err.message}`);
     } finally {
+      clearInterval(interval);
       setLoading(false);
-      console.log("Analysis complete");
     }
   };
 
+  const isHealthy = result?.label?.toLowerCase().includes("healthy");
+  const confidencePct = result ? Math.round(result.confidence * 100) : 0;
+
+  const getSeverity = (confidence) => {
+    if (isHealthy) return null;
+    if (confidence >= 0.8) return { label: "High Severity", color: "#B5430F", bg: "rgba(231,111,81,0.12)", border: "rgba(231,111,81,0.3)" };
+    if (confidence >= 0.55) return { label: "Moderate", color: "#8B5E0A", bg: "rgba(244,162,97,0.12)", border: "rgba(244,162,97,0.3)" };
+    return { label: "Low Severity", color: "#1B6B42", bg: "rgba(82,183,136,0.12)", border: "rgba(82,183,136,0.3)" };
+  };
+
+  const severity = getSeverity(result?.confidence || 0);
+
+  /* ── Loading screen ── */
+  if (loading || geminiLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ background: "#F8F5F0" }}>
+        <div className="text-center px-8 animate-scale-in">
+          <div
+            className="w-28 h-28 rounded-full mx-auto mb-8 flex items-center justify-center text-5xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(64,145,108,0.12), rgba(116,198,157,0.12))",
+              border: "3px solid rgba(64,145,108,0.2)",
+              animation: "pulseSoft 1.5s ease-in-out infinite",
+            }}
+          >
+            🔬
+          </div>
+          <h2 className="text-2xl font-extrabold mb-3" style={{ color: "#1A2E1A" }}>
+            {geminiLoading ? "Fetching Treatment Info" : "Scanning Your Crop"}
+          </h2>
+          <p className="text-base font-medium mb-8" style={{ color: "#40916C" }}>{loadingMsg}</p>
+          <div className="w-64 mx-auto h-2 rounded-full" style={{ background: "#E0EDE6" }}>
+            <div
+              className="h-2 rounded-full"
+              style={{
+                background: "linear-gradient(90deg, #40916C, #F4A261)",
+                animation: "progressFill 3.2s ease forwards",
+                width: "100%",
+              }}
+            />
+          </div>
+          <p className="text-xs mt-4" style={{ color: "#9AB09D" }}>Please wait — analyzing image patterns</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Main UI ── */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
-      {/* HEADER */}
-      <div className="h-14 bg-white shadow flex items-center px-6 gap-3">
+    <div className="min-h-screen" style={{ background: "#F8F5F0" }}>
+      {/* Header */}
+      <div className="page-header">
         <button
           onClick={() => window.history.back()}
-          className="text-gray-600 hover:text-gray-800 text-2xl font-bold transition"
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+          style={{ background: "rgba(64,145,108,0.1)", color: "#2D6A4F" }}
         >
-          ←
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-2xl font-semibold text-green-700">KrishiGibi</h2>
-        <span className="ml-auto text-sm text-gray-500">
-          AI-Powered Disease Detection
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg,#40916C,#74C69D)" }}>
+            <Leaf className="w-4 h-4 text-white fill-white" />
+          </div>
+          <span className="text-base font-bold" style={{ color: "#1A2E1A" }}>
+            Krishi<span style={{ color: "#40916C" }}>Connect</span>
+          </span>
+        </div>
+        <span className="ml-auto text-xs font-semibold px-3 py-1 rounded-full" style={{ background: "rgba(64,145,108,0.1)", color: "#2D6A4F" }}>
+          🔬 Disease Detection AI
         </span>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* LEFT CARD */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h3 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <rect
-                  x="3"
-                  y="3"
-                  width="18"
-                  height="18"
-                  rx="2"
-                  ry="2"
-                  strokeWidth="2"
-                />
-                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-                <path
-                  d="M21 15l-5-5L5 21"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Upload Plant Image
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">
-              Supported formats: JPG, PNG, WEBP
-            </p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
-            <div
-              className={`relative border-2 border-dashed rounded-xl p-6 min-h-[300px] flex items-center justify-center transition ${
-                previewUrl
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-300 hover:border-green-400"
-              }`}
-            >
-              {previewUrl ? (
-                <>
-                  <button
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 bg-red-500 p-1.5 rounded-full text-white hover:bg-red-600"
+        {/* Page Title */}
+        <div className="animate-fade-in-up">
+          <h1 className="text-2xl sm:text-3xl font-extrabold mb-1" style={{ color: "#1A2E1A" }}>
+            🌿 Crop Disease Detection
+          </h1>
+          <p className="text-sm" style={{ color: "#6B8F6E" }}>
+            Upload a clear photo of a plant leaf to detect diseases instantly
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+
+          {/* Upload Card */}
+          <div className="animate-fade-in-up">
+            <div className="rounded-3xl p-6 sm:p-7" style={{ background: "white", boxShadow: "0 4px 24px rgba(45,106,79,0.08)", border: "1px solid rgba(64,145,108,0.12)" }}>
+              <h2 className="text-base font-extrabold mb-1" style={{ color: "#1A2E1A" }}>📷 Upload Leaf Photo</h2>
+              <p className="text-xs mb-5" style={{ color: "#9AB09D" }}>JPG, PNG, WEBP — Max 10MB</p>
+
+              {/* Sample guidance chips */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {["Clear leaf", "Good lighting", "Single leaf", "Close-up shot"].map((tip, i) => (
+                  <span
+                    key={i}
+                    className="text-xs px-2.5 py-1 rounded-full font-medium"
+                    style={{ background: "rgba(64,145,108,0.08)", color: "#40916C", border: "1px solid rgba(64,145,108,0.15)" }}
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    ✓ {tip}
+                  </span>
+                ))}
+              </div>
+
+              {/* Drop zone */}
+              <label
+                htmlFor="disease-upload-input"
+                className={`relative block rounded-3xl transition-all duration-300 overflow-hidden ${previewUrl ? "cursor-default" : "cursor-pointer"}`}
+                style={{
+                  border: previewUrl ? `2px solid rgba(64,145,108,0.4)` : `2px dashed rgba(64,145,108,0.3)`,
+                  background: previewUrl ? "rgba(64,145,108,0.04)" : "#F8F5F0",
+                  minHeight: "260px",
+                }}
+                onMouseEnter={e => { if (!previewUrl) e.currentTarget.style.borderColor = "rgba(64,145,108,0.6)"; }}
+                onMouseLeave={e => { if (!previewUrl) e.currentTarget.style.borderColor = "rgba(64,145,108,0.3)"; }}
+              >
+                {previewUrl ? (
+                  <div className="relative flex items-center justify-center p-4" style={{ minHeight: "260px" }}>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all z-10 shadow-md"
+                      style={{ background: "#E76F51", color: "white" }}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                  <img
-                    src={previewUrl}
-                    alt="preview"
-                    className="max-h-64 rounded-lg object-contain"
-                  />
-                </>
-              ) : (
-                <label className="cursor-pointer flex flex-col items-center gap-3 text-gray-500">
-                  <svg
-                    className="w-10 h-10 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      <X className="w-4 h-4" />
+                    </button>
+                    <img
+                      src={previewUrl}
+                      alt="Plant leaf preview"
+                      className="max-h-56 rounded-2xl object-contain shadow-md"
                     />
-                  </svg>
-                  <span className="font-medium">Click to upload image</span>
+                    <div
+                      className="absolute bottom-3 left-3 px-3 py-1.5 rounded-xl text-xs font-bold"
+                      style={{ background: "rgba(27,67,50,0.85)", color: "#74C69D", backdropFilter: "blur(8px)" }}
+                    >
+                      ✓ {file?.name?.substring(0, 20)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center px-6" style={{ minHeight: "260px" }}>
+                    <div
+                      className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mb-4 animate-bounce-gentle"
+                      style={{ background: "rgba(64,145,108,0.1)", border: "1px solid rgba(64,145,108,0.15)" }}
+                    >
+                      📷
+                    </div>
+                    <p className="text-base font-bold mb-1" style={{ color: "#2D6A4F" }}>
+                      Tap to Upload Leaf Photo
+                    </p>
+                    <p className="text-xs" style={{ color: "#9AB09D" }}>
+                      Or drag and drop your image here
+                    </p>
+                  </div>
+                )}
+                {!previewUrl && (
                   <input
+                    id="disease-upload-input"
                     type="file"
                     className="hidden"
                     accept="image/*"
                     onChange={handleFileChange}
                   />
-                </label>
-              )}
-            </div>
+                )}
+              </label>
 
-            {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex gap-2 items-center">
-                <svg
-                  className="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {/* Error state */}
+              {error && (
+                <div
+                  className="mt-4 flex items-start gap-3 p-4 rounded-2xl animate-scale-in"
+                  style={{ background: "rgba(231,111,81,0.08)", border: "1px solid rgba(231,111,81,0.25)" }}
                 >
-                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01"
-                  />
-                </svg>
-                {error}
-              </div>
-            )}
-
-            <button
-              onClick={handleAnalyze}
-              disabled={!file || loading}
-              className="mt-4 w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="w-4 h-4 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Analyzing...
-                </span>
-              ) : (
-                "Analyze Image"
-              )}
-            </button>
-          </div>
-
-          {/* RIGHT PANEL */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-800 text-lg">
-                Analysis Result
-              </h3>
-            </div>
-
-            {!result && !loading && (
-              <div className="text-center py-12">
-                <svg
-                  className="w-16 h-16 text-gray-300 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <rect
-                    x="3"
-                    y="3"
-                    width="18"
-                    height="18"
-                    rx="2"
-                    ry="2"
-                    strokeWidth="2"
-                  />
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
-                  <path
-                    d="M21 15l-5-5L5 21"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <p className="text-gray-500 text-sm">
-                  Upload an image and click{" "}
-                  <span className="font-semibold text-green-600">
-                    Analyze Image
-                  </span>{" "}
-                  to see results here.
-                </p>
-              </div>
-            )}
-
-            {(loading || geminiLoading) && (
-              <div className="flex flex-col items-center justify-center py-12">
-                <svg
-                  className="w-12 h-12 text-green-600 animate-spin mb-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <p className="text-gray-600 font-medium">
-                  {geminiLoading
-                    ? "Fetching treatment info..."
-                    : "Analyzing your image..."}
-                </p>
-              </div>
-            )}
-
-            {result && !loading && diseaseDetails && (
-              <div className="rounded-2xl bg-red-50 border border-red-100 p-5 space-y-4">
-                <div className="flex justify-between items-center flex-wrap gap-2">
-                  <span className="text-sm text-gray-700 font-medium">
-                    Detected Issue:
-                  </span>
-                  <span className="px-4 py-1.5 bg-red-200/70 text-red-800 rounded-full text-xs font-semibold">
-                    {result.label.replace("___", " - ").replace(/_/g, " ")}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-700 font-medium">
-                    Confidence:
-                  </span>
-                  <span className="text-sm font-semibold text-gray-800">
-                    {Math.round(result.confidence * 100)}%
-                  </span>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="w-1 rounded-full bg-green-500 flex-shrink-0" />
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                        Disease Description
-                      </h4>
-                      <p className="text-sm text-gray-700 leading-relaxed">
-                        {diseaseDetails.description}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                        Recommended Treatment
-                      </h4>
-                      <ul className="space-y-2">
-                        {diseaseDetails.treatment.map((t, i) => (
-                          <li
-                            key={i}
-                            className="text-sm text-gray-700 flex gap-2"
-                          >
-                            <span className="text-green-600 font-bold">
-                              {i + 1}.
-                            </span>
-                            <span>{t}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <span className="text-xl flex-shrink-0">⚠️</span>
+                  <div>
+                    <p className="text-sm font-bold mb-0.5" style={{ color: "#B5430F" }}>Upload Error</p>
+                    <p className="text-xs" style={{ color: "#B5430F" }}>{error}</p>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Analyze button */}
+              <button
+                id="disease-analyze-btn"
+                onClick={handleAnalyze}
+                disabled={!file}
+                className="mt-5 w-full py-4 rounded-2xl font-bold text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-white"
+                style={{
+                  background: file ? "linear-gradient(135deg, #2D6A4F, #40916C)" : "#ccc",
+                  boxShadow: file ? "0 4px 20px rgba(45,106,79,0.3)" : "none",
+                }}
+                onMouseEnter={e => { if (file) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(45,106,79,0.4)"; } }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = file ? "0 4px 20px rgba(45,106,79,0.3)" : "none"; }}
+              >
+                {file ? "🔬 Analyze This Leaf" : "📷 Upload an Image First"}
+              </button>
+            </div>
+          </div>
+
+          {/* Results Card */}
+          <div className="animate-fade-in-up delay-100">
+            <div className="rounded-3xl p-6 sm:p-7 h-full flex flex-col" style={{ background: "white", boxShadow: "0 4px 24px rgba(45,106,79,0.08)", border: "1px solid rgba(64,145,108,0.12)" }}>
+              <h2 className="text-base font-extrabold mb-5" style={{ color: "#1A2E1A" }}>📊 Analysis Result</h2>
+
+              {/* Empty state */}
+              {!result && (
+                <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+                  <div className="text-6xl mb-4 animate-bounce-gentle">🍃</div>
+                  <p className="text-sm font-semibold mb-1" style={{ color: "#6B8F6E" }}>
+                    No analysis yet
+                  </p>
+                  <p className="text-xs" style={{ color: "#9AB09D" }}>
+                    Upload a leaf photo and tap{" "}
+                    <span className="font-bold" style={{ color: "#40916C" }}>Analyze</span>{" "}
+                    to see results here
+                  </p>
+                </div>
+              )}
+
+              {/* Results */}
+              {result && diseaseDetails && (
+                <div className="space-y-4 animate-scale-in flex-1">
+                  {/* Status banner */}
+                  {isHealthy ? (
+                    <div
+                      className="rounded-2xl p-4 text-center"
+                      style={{ background: "rgba(82,183,136,0.1)", border: "1px solid rgba(82,183,136,0.25)" }}
+                    >
+                      <div className="text-4xl mb-2">🎉</div>
+                      <h3 className="text-lg font-extrabold mb-1" style={{ color: "#1B6B42" }}>
+                        Plant is Healthy!
+                      </h3>
+                      <p className="text-sm" style={{ color: "#40916C" }}>
+                        No disease detected. Your crop looks great.
+                      </p>
+                    </div>
+                  ) : (
+                    <div
+                      className="rounded-2xl p-4"
+                      style={{ background: "rgba(231,111,81,0.08)", border: "1px solid rgba(231,111,81,0.2)" }}
+                    >
+                      <div className="flex items-start justify-between flex-wrap gap-2 mb-3">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: "#9AB09D" }}>
+                            Detected Disease
+                          </p>
+                          <h3 className="text-base font-extrabold" style={{ color: "#1A2E1A" }}>
+                            {result.label.replace("___", " › ").replace(/_/g, " ")}
+                          </h3>
+                        </div>
+                        {severity && (
+                          <span
+                            className="px-3 py-1 rounded-full text-xs font-bold flex-shrink-0"
+                            style={{ background: severity.bg, color: severity.color, border: `1px solid ${severity.border}` }}
+                          >
+                            {severity.label}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Confidence bar */}
+                      <div>
+                        <div className="flex justify-between text-xs font-semibold mb-1.5" style={{ color: "#6B8F6E" }}>
+                          <span>AI Confidence</span>
+                          <span style={{ color: "#1A2E1A" }}>{confidencePct}%</span>
+                        </div>
+                        <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "#F0E8E4" }}>
+                          <div
+                            className="h-2.5 rounded-full"
+                            style={{
+                              width: `${confidencePct}%`,
+                              background: `linear-gradient(90deg, #E76F51, #F4A261)`,
+                              animation: "progressFill 0.8s ease both",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{ background: "#F8F5F0", border: "1px solid rgba(64,145,108,0.1)" }}
+                  >
+                    <h4 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: "#40916C" }}>
+                      🧬 About This Disease
+                    </h4>
+                    <p className="text-sm leading-relaxed" style={{ color: "#3D5A40" }}>
+                      {diseaseDetails.description}
+                    </p>
+                  </div>
+
+                  {/* Treatment steps */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: "#40916C" }}>
+                      💊 Treatment Steps
+                    </h4>
+                    <div className="space-y-2.5">
+                      {diseaseDetails.treatment.map((t, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-3 p-3 rounded-2xl"
+                          style={{ background: i % 2 === 0 ? "rgba(64,145,108,0.05)" : "white", border: "1px solid rgba(64,145,108,0.1)" }}
+                        >
+                          <div
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0 mt-0.5"
+                            style={{ background: "rgba(64,145,108,0.15)", color: "#2D6A4F" }}
+                          >
+                            {i + 1}
+                          </div>
+                          <p className="text-sm leading-relaxed" style={{ color: "#3D5A40" }}>{t}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Reset link */}
+                  <button
+                    onClick={removeImage}
+                    className="text-xs font-bold underline transition-colors"
+                    style={{ color: "#9AB09D" }}
+                    onMouseEnter={e => { e.currentTarget.style.color = "#2D6A4F"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = "#9AB09D"; }}
+                  >
+                    ← Try another image
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* BOTTOM: Supported crops & diseases */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-1">
-            Supported Crops & Diseases
-          </h3>
-          <p className="text-sm text-gray-500 mb-5">
-            This AI model currently supports disease detection for the following
-            crops:
+        {/* Supported Crops Section */}
+        <div
+          className="rounded-3xl p-6 sm:p-8 animate-fade-in-up delay-200"
+          style={{ background: "white", boxShadow: "0 4px 24px rgba(45,106,79,0.06)", border: "1px solid rgba(64,145,108,0.1)" }}
+        >
+          <h2 className="text-base font-extrabold mb-1" style={{ color: "#1A2E1A" }}>
+            🌱 Supported Crops & Diseases
+          </h2>
+          <p className="text-xs mb-6" style={{ color: "#9AB09D" }}>
+            Our AI model can detect diseases across these crops
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Object.entries(cropDiseaseMap).map(([crop, diseases]) => (
-              <div
-                key={crop}
-                className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-4 hover:shadow-md transition"
-              >
-                <span className="inline-flex px-3 py-1 rounded-full bg-green-600 text-white text-sm font-semibold mb-3">
-                  {crop}
-                </span>
-                <ul className="space-y-1.5 text-xs sm:text-sm text-gray-700">
-                  {diseases.map((name, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">•</span>
-                      <span>{name}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Object.entries(cropDiseaseMap).map(([crop, diseases]) => {
+              const cropEmojis = {
+                Apple: "🍎", Blueberry: "🫐", Cherry: "🍒", Corn: "🌽",
+                Grape: "🍇", Orange: "🍊", Peach: "🍑", Pepper: "🌶️",
+                Potato: "🥔", Raspberry: "🍓", Soybean: "🌿", Squash: "🥦",
+                Strawberry: "🍓", Tomato: "🍅",
+              };
+              const emoji = cropEmojis[crop] || "🌾";
+              return (
+                <div
+                  key={crop}
+                  className="rounded-2xl p-4 transition-all duration-200 card-lift"
+                  style={{ background: "#F8F5F0", border: "1px solid rgba(64,145,108,0.12)" }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xl">{emoji}</span>
+                    <span
+                      className="text-sm font-extrabold"
+                      style={{ color: "#1A2E1A" }}
+                    >
+                      {crop}
+                    </span>
+                  </div>
+                  <ul className="space-y-1">
+                    {diseases.map((name, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs" style={{ color: "#6B8F6E" }}>
+                        <span className="mt-0.5 flex-shrink-0" style={{ color: "#52B788" }}>•</span>
+                        <span className="capitalize">{name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         </div>
+
       </div>
     </div>
   );
