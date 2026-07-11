@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  crop-prediction:
+    build: ./crop_prediction
+    container_name: crop-prediction-api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

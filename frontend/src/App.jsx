@@ -11,6 +11,7 @@ import SignUp from "./pages/SignUp";
 import DiseasePrediction from "./pages/DiseasePrediction";
 import SoilAnalysis from "./pages/SoilAnalysis";
 import Profile from "./pages/Profile";
+import Chatbot from "./pages/Chatbot";
 import NotFound from "./pages/NotFound";
 
 // Protected Route Component
@@ -88,6 +89,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <DiseasePrediction />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/chatbot"
+            element={
+              <ProtectedRoute>
+                <Chatbot />
               </ProtectedRoute>
             }
           />

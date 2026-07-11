@@ -7,6 +7,7 @@ import Testimonials from "../components/Testimonials";
 import Contact from "../components/Contact";
 import Footer from "../components/Footer";
 import Reveal from "../components/Reveal";
+import ChatWidget from "../components/ChatWidget";
 import { Phone, MapPin, Mail } from "lucide-react";
 import { useState } from "react";
 
@@ -58,6 +59,9 @@ const Dashboard = () => {
           <Footer scrollToSection={scrollToSection} />
         </Reveal>
       </main>
+
+      {/* Floating AI Chat Widget */}
+      <ChatWidget />
     </div>
   );
 };

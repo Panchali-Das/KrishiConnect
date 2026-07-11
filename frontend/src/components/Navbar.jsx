@@ -13,6 +13,7 @@ import {
   Layers,
   Star,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 
 const Navbar = ({ activeSection, scrollToSection }) => {
@@ -113,21 +114,25 @@ const Navbar = ({ activeSection, scrollToSection }) => {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                {/* Notifications */}
+                {/* AI Chat */}
                 <button
+                  onClick={() => navigate("/dashboard")}
                   className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200"
                   style={{ color: "rgba(255,255,255,0.65)" }}
                   onMouseEnter={e => {
                     e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                    e.currentTarget.style.color = "#fff";
+                    e.currentTarget.style.color = "#F4A261";
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.background = "transparent";
                     e.currentTarget.style.color = "rgba(255,255,255,0.65)";
                   }}
+                  title="Open AI Chat"
                 >
-                  <Bell className="w-4.5 h-4.5" />
+                  <MessageCircle className="w-4.5 h-4.5" />
                 </button>
+
+                {/* Notifications */}
 
                 {/* Profile Dropdown */}
                 <div className="relative">
@@ -273,6 +278,21 @@ const Navbar = ({ activeSection, scrollToSection }) => {
                 </button>
               );
             })}
+
+            {user && (
+              <div className="pt-3 mt-3" style={{ borderTop: "1px solid rgba(82,183,136,0.15)" }}>
+                <button
+                  onClick={() => { navigate("/dashboard"); setMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all"
+                  style={{ color: "rgba(255,255,255,0.8)" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  <MessageCircle className="w-4 h-4" style={{ color: "#74C69D" }} />
+                  AI Chat
+                </button>
+              </div>
+            )}
 
             {!user && (
               <div className="grid grid-cols-2 gap-2 mt-3 pt-3" style={{ borderTop: "1px solid rgba(82,183,136,0.15)" }}>

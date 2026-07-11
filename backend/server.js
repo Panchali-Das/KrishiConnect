@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
 const featureRoutes = require("./routes/featureRoutes");
 const userRoutes = require("./routes/userRoutes");
+const chatbotRoutes = require("./routes/chatbotRoutes");
 
 const app = express();
 
@@ -46,7 +47,7 @@ app.use("/api/features", featureRoutes);
 
 app.use("/api/user", userRoutes);
 
-// ... keep all your routing code the same up here ...
+app.use("/api/chatbot", chatbotRoutes);
 
 app.get("/", (req, res) => {
   return res.status(200).json({
