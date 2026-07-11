@@ -14,7 +14,25 @@ connectDB();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        process.env.FRONTEND_URL, // Set this in Vercel env vars to your deployed URL
+      ].filter(Boolean);
+
+      // Allow any vercel.app subdomain automatically
+      const isVercel = origin.endsWith(".vercel.app");
+
+      if (allowedOrigins.includes(origin) || isVercel) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
