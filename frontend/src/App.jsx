@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import DiseasePrediction from "./pages/DiseasePrediction";
 import SoilAnalysis from "./pages/SoilAnalysis";
+import YieldPrediction from "./pages/YieldPrediction";
 import Profile from "./pages/Profile";
 import Chatbot from "./pages/Chatbot";
 import NotFound from "./pages/NotFound";
@@ -89,6 +90,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <DiseasePrediction />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/yield-prediction"
+            element={
+              <ProtectedRoute>
+                <YieldPrediction />
               </ProtectedRoute>
             }
           />

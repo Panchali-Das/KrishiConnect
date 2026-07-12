@@ -15,7 +15,7 @@ const Footer = ({ scrollToSection }) => {
   const features = [
     { label: "🌱 Crop Recommendation", route: "/soil-analysis",     active: true  },
     { label: "🔬 Disease Detection",   route: "/disease-prediction", active: true  },
-    { label: "📊 Yield Prediction",    route: null,                  active: false },
+    { label: "📊 Yield Prediction",    route: "/yield-prediction",   active: true  },
   ];
 
   const socials = [
