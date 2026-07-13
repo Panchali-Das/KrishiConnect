@@ -1,48 +1,125 @@
 const express = require("express");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const multer = require("multer");
 
 const protect = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const YIELD_API = process.env.YIELD_PREDICTION_API_URL || "https://yield-prediction-ghws.onrender.com";
+const CROP_REC_API = process.env.CROP_RECOMMENDATION_API_URL || "https://crop-recommendation-service-qjuq.onrender.com";
+const DISEASE_API = process.env.DISEASE_PREDICTION_API_URL || "http://localhost:8000";
 
-// Protected Disease Prediction API
-router.post("/disease-prediction", protect, async (req, res) => {
+const upload = multer({ storage: multer.memoryStorage() });
+
+router.post("/disease-prediction", protect, upload.single("file"), async (req, res) => {
   try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No image file uploaded. Please provide a file.",
+      });
+    }
+
+    const formData = new FormData();
+    formData.append("file", new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname);
+
+    const extRes = await fetch(`${DISEASE_API}/predict`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!extRes.ok) {
+      return res.status(502).json({ success: false, message: "Disease prediction service error" });
+    }
+
+    const extData = await extRes.json();
+
     res.status(200).json({
       success: true,
-      message: "Disease prediction accessed successfully",
-      user: req.user,
+      data: {
+        prediction: extData.prediction,
+        confidence: extData.confidence,
+      },
     });
   } catch (error) {
+    console.error("Disease prediction error:", error);
     res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: "Disease prediction failed. Please try again.",
     });
   }
 });
 
-// Protected Soil Analysis API
 router.post("/soil-analysis", protect, async (req, res) => {
   try {
+    const { nitrogen, phosphorous, potassium, ph, temperature, humidity } = req.body;
+
+    if (nitrogen === undefined || phosphorous === undefined || potassium === undefined || ph === undefined || temperature === undefined || humidity === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required: nitrogen, phosphorous, potassium, ph, temperature, humidity",
+      });
+    }
+
+    const extRes = await fetch(`${CROP_REC_API}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        N: nitrogen,
+        P: phosphorous,
+        K: potassium,
+        pH: ph,
+        temperature,
+        humidity,
+      }),
+    });
+
+    if (!extRes.ok) {
+      return res.status(502).json({ success: false, message: "Crop recommendation service error" });
+    }
+
+    const extData = await extRes.json();
+
+    const recommendedCrops = extData.top5.map((item) => ({
+      name: item.crop.charAt(0).toUpperCase() + item.crop.slice(1),
+      probability: parseFloat(item.confidence.replace("%", "")) / 100,
+      why: `Soil conditions are ${parseFloat(item.confidence.replace("%", "")) >= 20 ? "highly" : "moderately"} suitable for ${item.crop}`,
+    }));
+
+    const topConfidence = parseFloat(extData.confidence.replace("%", ""));
+    const soilHealthScore = Math.min(100, Math.round(topConfidence * 3 + 30));
+    let soilStatus = "Good";
+    if (soilHealthScore < 50) soilStatus = "Needs Improvement";
+    else if (soilHealthScore < 70) soilStatus = "Average";
+
     res.status(200).json({
       success: true,
-      message: "Soil analysis accessed successfully",
-      user: req.user,
+      data: {
+        recommendedCrops,
+        soilHealth: {
+          status: soilStatus,
+          score: soilHealthScore,
+          description: `Your soil shows a ${topConfidence >= 20 ? "strong" : "moderate"} match with ${extData.predicted_crop}. Overall soil condition appears ${soilStatus.toLowerCase()} for cultivation.`,
+          tips: [
+            "Consider soil testing every season for accurate nutrient tracking",
+            "Add organic compost to improve soil structure and fertility",
+            "Practice crop rotation to maintain soil health",
+          ],
+        },
+      },
     });
   } catch (error) {
+    console.error("Soil analysis error:", error);
     res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: "Soil analysis failed. Please try again.",
     });
   }
 });
 
-// Protected Yield Prediction API
 router.post("/yield-prediction", protect, async (req, res) => {
   try {
-    const { crop, season, state, area, fertilizer, pesticide, language = "en" } = req.body;
+    const { crop, season, state, area, fertilizer, pesticide } = req.body;
 
     if (!crop || !season || !state || !area || !fertilizer || !pesticide) {
       return res.status(400).json({
@@ -51,56 +128,30 @@ router.post("/yield-prediction", protect, async (req, res) => {
       });
     }
 
-    const langName = {
-      en: "English", hi: "Hindi", bn: "Bengali", te: "Telugu",
-      mr: "Marathi", ta: "Tamil", gu: "Gujarati", kn: "Kannada",
-      ml: "Malayalam", pa: "Punjabi",
-    }[language] || "English";
+    const extRes = await fetch(`${YIELD_API}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ crop, season, state, area, fertilizer, pesticide }),
+    });
 
-    const prompt = `You are an expert agricultural scientist specializing in Indian farming. Based on the following inputs, predict the crop yield and provide practical advice for the farmer.
-
-Inputs:
-- Crop: ${crop}
-- Season: ${season}
-- State: ${state}
-- Area: ${area} hectares
-- Fertilizer used: ${fertilizer} kgs
-- Pesticide used: ${pesticide} kgs
-
-Respond ONLY with a valid JSON object (no markdown, no code fences) in the following structure:
-{
-  "predictedYield": <a number representing yield in tonnes per hectare>,
-  "inputSummary": "<1-2 sentences in ${langName} clearly restating the input parameters (crop, season, state, area, fertilizer, pesticide) and stating the predicted yield. Example: 'For your Rice crop in Punjab during Kharif season on 5 hectares with 200 kgs fertilizer and 15 kgs pesticide, the predicted yield is X tonnes per hectare.'>",
-  "description": "<a 2-3 sentence farmer-friendly explanation in ${langName} of why this yield is expected, considering typical yields for ${crop} in ${state} during ${season} season, adjusted by the fertilizer and pesticide inputs>",
-  "tips": ["<tip 1 in ${langName}>", "<tip 2 in ${langName}>", "<tip 3 in ${langName}>", "<tip 4 in ${langName}>"]
-}
-
-Make the inputSummary clearly show what was entered and what the result is. Keep the description practical and easy for a farmer to understand. All text must be in ${langName}.`;
-
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-
-    let parsed;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error("Could not parse Gemini response");
-      }
+    if (!extRes.ok) {
+      return res.status(502).json({ success: false, message: "Yield prediction service error" });
     }
+
+    const extData = await extRes.json();
 
     res.status(200).json({
       success: true,
       data: {
-        predictedYield: parsed.predictedYield,
-        inputSummary: parsed.inputSummary || "",
-        description: parsed.description,
-        tips: parsed.tips || [],
+        predictedYield: extData.predicted_yield,
+        inputSummary: `For your ${crop} crop in ${state} during ${season} season on ${area} hectares with ${fertilizer} kgs fertilizer and ${pesticide} kgs pesticide, the predicted yield is ${extData.predicted_yield?.toFixed(2) || extData.predicted_yield} tonnes per hectare.`,
+        description: `Based on your inputs for ${crop} cultivation in ${state} during ${season}, the model estimates a yield of ${extData.predicted_yield?.toFixed(2) || extData.predicted_yield} tonnes per hectare with a total production of ${extData.predicted_production?.toFixed(2) || extData.predicted_production} tonnes across ${area} hectares.`,
+        tips: [
+          "Ensure proper irrigation scheduling for optimal yield",
+          "Use balanced NPK fertilizers as per soil test recommendations",
+          "Monitor pest activity regularly and take timely action",
+          "Practice crop rotation to maintain soil fertility",
+        ],
       },
     });
   } catch (error) {

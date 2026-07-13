@@ -143,26 +143,42 @@ const SoilAnalysis = () => {
       if (i < messages.length) setLoadingMsg(messages[i]);
     }, 700);
 
-    setTimeout(() => {
-      clearInterval(interval);
+    try {
+      const token = localStorage.getItem("authToken");
+      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${baseUrl}/api/features/soil-analysis`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Analysis failed");
+
+      setPredictions(data.data);
+      setShowResults(true);
+    } catch (error) {
       setPredictions({
         recommendedCrops: [
-          { name: "Potato",   probability: 0.92, why: "Ideal N-P-K balance and pH match" },
-          { name: "Tomato",   probability: 0.85, why: "Good temperature and humidity match" },
-          { name: "Grape",    probability: 0.78, why: "Suitable rainfall and soil nutrients" },
-          { name: "Apple",    probability: 0.71, why: "Moderate temperature conditions align" },
-          { name: "Wheat",    probability: 0.65, why: "Adequate nitrogen and rainfall levels" },
+          { name: "Potato",   probability: 0.45, why: "Estimated based on general soil conditions" },
+          { name: "Tomato",   probability: 0.38, why: "Estimated based on general soil conditions" },
+          { name: "Wheat",    probability: 0.32, why: "Estimated based on general soil conditions" },
         ],
         soilHealth: {
-          status:      "Good",
-          score:       76,
-          description: "Your soil is well-balanced for cultivation. Slight improvement in potassium would be beneficial.",
-          tips: ["Add organic compost to boost K", "Current pH is near-ideal for most crops"],
+          status:      "Unavailable",
+          score:       50,
+          description: "Could not fetch AI analysis. Showing estimated values.",
+          tips: ["Consult local agricultural officer for detailed soil testing"],
         },
       });
       setShowResults(true);
+    } finally {
+      clearInterval(interval);
       setLoading(false);
-    }, 3000);
+    }
   };
 
   const resetAll = () => {

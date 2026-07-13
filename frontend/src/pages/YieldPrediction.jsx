@@ -255,11 +255,16 @@ const T = {
 };
 
 const CROPS = [
-  "Rice", "Wheat", "Maize", "Sugarcane", "Cotton", "Potato", "Tomato",
-  "Onion", "Groundnut", "Soybean", "Mustard", "Bajra", "Jowar", "Ragi",
-  "Barley", "Sunflower", "Sesame", "Jute", "Tea", "Coffee", "Coconut",
-  "Banana", "Mango", "Orange", "Grapes", "Pomegranate", "Brinjal",
-  "Cabbage", "Cauliflower", "Peas", "Chilies", "Turmeric", "Ginger",
+  "Arecanut", "Arhar/Tur", "Castor seed", "Coconut", "Cotton(lint)", "Dry chillies",
+  "Gram", "Jute", "Linseed", "Maize", "Mesta", "Niger seed",
+  "Onion", "Other Rabi pulses", "Potato", "Rapeseed &Mustard", "Rice", "Sesamum",
+  "Small millets", "Sugarcane", "Sweet potato", "Tapioca", "Tobacco", "Turmeric",
+  "Wheat", "Bajra", "Black pepper", "Cardamom", "Coriander", "Garlic",
+  "Ginger", "Groundnut", "Horse-gram", "Jowar", "Ragi", "Cashewnut",
+  "Banana", "Soyabean", "Barley", "Khesari", "Masoor", "Moong(Green Gram)",
+  "Other Kharif pulses", "Safflower", "Sannhamp", "Sunflower", "Urad",
+  "Peas & beans (Pulses)", "other oilseeds", "Other Cereals", "Cowpea(Lobia)",
+  "Oilseeds total", "Guar seed", "Other Summer Pulses", "Moth",
 ];
 
 const INDIAN_STATES = [
@@ -274,13 +279,19 @@ const INDIAN_STATES = [
 ];
 
 const cropIcons = {
-  Rice: "🌾", Wheat: "🌾", Maize: "🌽", Sugarcane: "🎋", Cotton: "☁️",
-  Potato: "🥔", Tomato: "🍅", Onion: "🧅", Groundnut: "🥜", Soybean: "🌿",
-  Mustard: "🌱", Bajra: "🌾", Jowar: "🌾", Ragi: "🌾", Barley: "🌾",
-  Sunflower: "🌻", Sesame: "🌱", Jute: "🌿", Tea: "🍵", Coffee: "☕",
-  Coconut: "🥥", Banana: "🍌", Mango: "🥭", Orange: "🍊", Grapes: "🍇",
-  Pomegranate: "🍎", Brinjal: "🍆", Cabbage: "🥬", Cauliflower: "🥦",
-  Peas: "🫛", Chilies: "🌶️", Turmeric: "🧂", Ginger: "🫚",
+  Rice: "🌾", Wheat: "🌾", Maize: "🌽", Sugarcane: "🎋", Coconut: "🥥",
+  Potato: "🥔", Onion: "🧅", Groundnut: "🥜", Soybean: "🌿",
+  Bajra: "🌾", Jowar: "🌾", Ragi: "🌾", Barley: "🌾",
+  Sunflower: "🌻", Jute: "🌿", Banana: "🍌", Tobacco: "🍃",
+  Turmeric: "🧂", Ginger: "🫚", Garlic: "🧄", Cashewnut: "🥜",
+  Black pepper: "🌶️", Cardamom: "🫛", Coriander: "🌿",
+  "Arhar/Tur": "🫘", "Castor seed": "🌱", "Dry chillies": "🌶️",
+  Gram: "🫘", Linseed: "🌱", Mesta: "🌿", "Niger seed": "🌱",
+  Sesamum: "🌱", "Sweet potato": "🍠", Tapioca: "🥔",
+  "Horse-gram": "🫘", "Rapeseed &Mustard": "🌱", Safflower: "🌼",
+  Sannhamp: "🌿", Urad: "🫘", Masoor: "🫘",
+  "Moong(Green Gram)": "🫘", "Peas & beans (Pulses)": "🫛",
+  Arecanut: "🌴", "Small millets": "🌾",
 };
 
 const YieldPrediction = () => {
