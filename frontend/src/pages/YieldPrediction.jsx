@@ -284,7 +284,7 @@ const cropIcons = {
   Bajra: "🌾", Jowar: "🌾", Ragi: "🌾", Barley: "🌾",
   Sunflower: "🌻", Jute: "🌿", Banana: "🍌", Tobacco: "🍃",
   Turmeric: "🧂", Ginger: "🫚", Garlic: "🧄", Cashewnut: "🥜",
-  Black pepper: "🌶️", Cardamom: "🫛", Coriander: "🌿",
+  "Black pepper": "🌶️", Cardamom: "🫛", Coriander: "🌿",
   "Arhar/Tur": "🫘", "Castor seed": "🌱", "Dry chillies": "🌶️",
   Gram: "🫘", Linseed: "🌱", Mesta: "🌿", "Niger seed": "🌱",
   Sesamum: "🌱", "Sweet potato": "🍠", Tapioca: "🥔",
