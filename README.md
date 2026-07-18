@@ -1,4 +1,4 @@
-# KrishiConnect
+# KrishiConnect 🌾
 
 AI-powered platform for Indian farmers — crop disease detection, soil analysis and crop recommendation, crop yield prediction, and a multilingual farming chatbot.
 
