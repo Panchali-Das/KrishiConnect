@@ -65,6 +65,23 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--color-green-mid); }
 
   * { box-sizing: border-box; }
+
+  /* Minimum tap target size for mobile (44px) */
+  button, a {
+    min-height: 36px;
+  }
+
+  /* Prevent text resize on iOS */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Better touch response */
+  button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
 }
 
 /* ── Animation Keyframes ── */

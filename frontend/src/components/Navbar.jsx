@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Leaf,
-  Bell,
   UserCircle,
   LogOut,
   Menu,
@@ -75,6 +74,42 @@ const Navbar = ({ activeSection, scrollToSection }) => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.key;
+
+              if (item.key === "services") {
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => { setMobileMenu(false); navigate("/services"); }}
+                    className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+                    style={{
+                      color: isActive ? "#F4A261" : "rgba(255,255,255,0.75)",
+                      background: isActive ? "rgba(244,162,97,0.12)" : "transparent",
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = "#fff";
+                        e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        e.currentTarget.style.color = "rgba(255,255,255,0.75)";
+                        e.currentTarget.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {item.title}
+                    {isActive && (
+                      <span
+                        className="absolute bottom-0.5 left-4 right-4 h-0.5 rounded-full"
+                        style={{ background: "#F4A261" }}
+                      />
+                    )}
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={item.key}
@@ -262,6 +297,25 @@ const Navbar = ({ activeSection, scrollToSection }) => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.key;
+
+              if (item.key === "services") {
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => { setMobileMenu(false); navigate("/services"); }}
+                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200"
+                    style={{
+                      background: isActive ? "rgba(244,162,97,0.15)" : "transparent",
+                      color: isActive ? "#F4A261" : "rgba(255,255,255,0.8)",
+                      borderLeft: isActive ? "3px solid #F4A261" : "3px solid transparent",
+                    }}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.title}
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={item.key}

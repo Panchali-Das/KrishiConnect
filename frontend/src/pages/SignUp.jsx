@@ -112,7 +112,7 @@ function SignUp() {
         {/* Bottom */}
         <div className="relative z-10">
           <p className="text-xs italic" style={{ color: "rgba(255,255,255,0.45)" }}>
-            "Trusted by 50,000+ farmers across India"
+            "Trusted by farmers across India"
           </p>
         </div>
       </div>

@@ -1,10 +1,8 @@
-import { ArrowRight, Compass, Users, Sprout, ShieldCheck } from "lucide-react";
+import { ArrowRight, Compass, Sprout } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const stats = [
-  { icon: Users,       value: "50,000+", label: "Farmers" },
   { icon: Sprout,      value: "22+",     label: "Crops Covered" },
-  { icon: ShieldCheck, value: "95%",     label: "AI Accuracy" },
 ];
 
 const HeroContent = ({ scrollToSection }) => {

@@ -144,8 +144,8 @@ router.post("/yield-prediction", protect, async (req, res) => {
       success: true,
       data: {
         predictedYield: extData.predicted_yield,
-        inputSummary: `For your ${crop} crop in ${state} during ${season} season on ${area} hectares with ${fertilizer} kgs fertilizer and ${pesticide} kgs pesticide, the predicted yield is ${extData.predicted_yield?.toFixed(2) || extData.predicted_yield} tonnes per hectare.`,
-        description: `Based on your inputs for ${crop} cultivation in ${state} during ${season}, the model estimates a yield of ${extData.predicted_yield?.toFixed(2) || extData.predicted_yield} tonnes per hectare with a total production of ${extData.predicted_production?.toFixed(2) || extData.predicted_production} tonnes across ${area} hectares.`,
+        inputSummary: `For your ${crop} crop in ${state} during ${season} season on ${area} hectares with ${fertilizer} kgs fertilizer and ${pesticide} kgs pesticide, the predicted yield is ${extData.predicted_yield?.toFixed(1) || extData.predicted_yield} tonnes per hectare.`,
+        description: `Based on your inputs for ${crop} cultivation in ${state} during ${season}, the model estimates a yield of ${extData.predicted_yield?.toFixed(1) || extData.predicted_yield} tonnes per hectare with a total production of ${(extData.predicted_production || 0).toFixed(1)} tonnes across ${area} hectares.`,
         tips: [
           "Ensure proper irrigation scheduling for optimal yield",
           "Use balanced NPK fertilizers as per soil test recommendations",

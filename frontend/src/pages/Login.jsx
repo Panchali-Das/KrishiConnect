@@ -93,7 +93,7 @@ function Login() {
         {/* Bottom quote */}
         <div className="relative z-10">
           <p className="text-xs italic" style={{ color: "rgba(255,255,255,0.45)" }}>
-            "Helping 50,000+ farmers make smarter decisions"
+            "Making farming smarter with AI-powered insights"
           </p>
         </div>
       </div>

@@ -5,9 +5,7 @@ import A4 from "../Images/A4.jpg";
 import A5 from "../Images/A5.jpg";
 
 const stats = [
-  { emoji: "👨‍🌾", value: "50,000+", label: "Farmers Helped",     sub: "Across India"     },
   { emoji: "🌾",   value: "22+",     label: "Crops Supported",   sub: "Paddy to Grapes"  },
-  { emoji: "🤖",   value: "95%",     label: "AI Accuracy",       sub: "Disease detection" },
   { emoji: "📱",   value: "Free",    label: "Always Free",       sub: "No subscription"   },
 ];
 

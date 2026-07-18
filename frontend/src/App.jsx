@@ -11,6 +11,7 @@ import SignUp from "./pages/SignUp";
 import DiseasePrediction from "./pages/DiseasePrediction";
 import SoilAnalysis from "./pages/SoilAnalysis";
 import YieldPrediction from "./pages/YieldPrediction";
+import ServicesPage from "./pages/ServicesPage";
 import Profile from "./pages/Profile";
 import Chatbot from "./pages/Chatbot";
 import NotFound from "./pages/NotFound";
@@ -108,6 +109,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <Chatbot />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/services"
+            element={
+              <ProtectedRoute>
+                <ServicesPage />
               </ProtectedRoute>
             }
           />

@@ -4,10 +4,13 @@ import { ArrowRight } from "lucide-react";
 const services = [
   {
     emoji:       "🌱",
-    title:       "Crop Recommendation",
+    title:       "Crop Suggestion",
+    subtitle:    "Kaunsi Fasal Ugayen?",
     tag:         "Soil Analysis",
-    description: "Enter your soil nutrients (N-P-K), pH, rainfall & temperature — get instant AI crop suggestions tailored to your exact conditions.",
-    route:       "/soil-analysis",
+    description: "Apni mitti ka hisaab dein — N-P-K, pH, rainfall & temperature — aur paiye AI-powered fasal ki salah jo sirf aapke khet ke liye ho.",
+    descEn:      "Enter your soil nutrients (N-P-K), pH & climate data. Get instant AI crop suggestions for your field.",
+    serviceKey:  "soil-analysis",
+    route:       "/services",
     tips:        ["N-P-K levels", "pH & moisture", "Climate data"],
     accent:      "#40916C",
     accentLight: "rgba(64,145,108,0.10)",
@@ -16,11 +19,14 @@ const services = [
   },
   {
     emoji:       "🔬",
-    title:       "Disease Detection",
+    title:       "Disease Check",
+    subtitle:    "Patte ki Bimari Pakdein",
     tag:         "Image AI",
-    description: "Upload a photo of your crop leaf. Our AI scans for 38+ diseases across 10+ crops and gives you plain-language treatment advice.",
-    route:       "/disease-prediction",
-    tips:        ["Upload leaf photo", "Instant diagnosis", "Treatment guide"],
+    description: "Fasal ke patte ki photo upload karein. AI turant bata dega — kya bimari hai, aur seedhe bhasha mein ilaaj kya karein.",
+    descEn:      "Upload a photo of your crop leaf. AI scans 38+ diseases & gives plain-language treatment advice.",
+    serviceKey:  "disease-prediction",
+    route:       "/services",
+    tips:        ["Patte ki photo", "Fori Nidaan", "Ilaaj Guide"],
     accent:      "#E76F51",
     accentLight: "rgba(231,111,81,0.10)",
     accentBorder:"rgba(231,111,81,0.2)",
@@ -28,11 +34,14 @@ const services = [
   },
   {
     emoji:       "📊",
-    title:       "Yield Prediction",
+    title:       "Yield Forecast",
+    subtitle:    "Kitni Paidawar Hogi?",
     tag:         "Analytics",
-    description: "Predict your expected harvest output based on crop, season, location and input usage. Get AI-powered insights in your language.",
-    route:       "/yield-prediction",
-    tips:        ["Crop & season", "Input analysis", "Harvest forecast"],
+    description: "Fasal, mausam, jagah aur kharcha dein — AI batayega aapko kitni paidawar milne ki umeed karni chahiye harvest se pehle.",
+    descEn:      "Predict expected harvest output based on crop, season, location & inputs. Plan better, earn more.",
+    serviceKey:  "yield-prediction",
+    route:       "/services",
+    tips:        ["Fasal & Mausam", "Kharcha Vishleshan", "Paidawar Andaza"],
     accent:      "#F4A261",
     accentLight: "rgba(244,162,97,0.10)",
     accentBorder:"rgba(244,162,97,0.2)",
@@ -45,7 +54,7 @@ const Services = () => {
   const navigate = useNavigate();
 
   return (
-    <section id="services-section" className="py-24 scroll-mt-24" style={{ background: "#F8F5F0" }}>
+    <section id="services-section" className="py-16 sm:py-24 scroll-mt-24" style={{ background: "#F8F5F0" }}>
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
         {/* Section Header */}
@@ -62,20 +71,23 @@ const Services = () => {
             Our AI Services
           </div>
 
-          <h2 className="text-4xl lg:text-5xl font-extrabold mb-4" style={{ color: "#1A2E1A" }}>
-            Everything a Farmer Needs,
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-4" style={{ color: "#1A2E1A" }}>
+            Har Kisan Ka Saathi,
             <br />
-            <span style={{ color: "#40916C" }}>Powered by AI</span>
+            <span style={{ color: "#40916C" }}>Powered by AI 🤝</span>
           </h2>
 
-          <p className="text-lg max-w-2xl leading-relaxed" style={{ color: "#6B8F6E" }}>
-            Simple, accurate, and fast — designed to work even in low-connectivity
-            areas on any mobile device.
+          <p className="text-base sm:text-lg max-w-2xl leading-relaxed" style={{ color: "#6B8F6E" }}>
+            Seedha, saral aur tez — koi technical knowledge ki zaroorat nahi.
+            Kisi bhi mobile par, low-internet par bhi kaam karta hai.
+          </p>
+          <p className="text-sm max-w-xl mt-2" style={{ color: "#9AB09D" }}>
+            Simple, accurate & fast — designed to work even in low-connectivity areas on any mobile device.
           </p>
         </div>
 
         {/* Service Cards Grid */}
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {services.map((service, index) => (
             <div
               key={index}
@@ -116,13 +128,22 @@ const Services = () => {
               </p>
 
               {/* Title */}
-              <h3 className="text-xl font-extrabold mb-3 transition-colors duration-200" style={{ color: "#1A2E1A" }}>
+              <h3 className="text-xl font-extrabold mb-0.5 transition-colors duration-200" style={{ color: "#1A2E1A" }}>
                 {service.title}
               </h3>
+              {service.subtitle && (
+                <p className="text-sm font-semibold mb-3" style={{ color: service.accent }}>
+                  {service.subtitle}
+                </p>
+              )}
 
-              {/* Description */}
-              <p className="text-sm leading-relaxed mb-5" style={{ color: "#6B8F6E" }}>
+              {/* Description (Hindi) */}
+              <p className="text-sm leading-relaxed mb-1" style={{ color: "#4A6E4E", fontStyle: "italic" }}>
                 {service.description}
+              </p>
+              {/* Description (English) */}
+              <p className="text-xs leading-relaxed mb-5" style={{ color: "#6B8F6E" }}>
+                {service.descEn}
               </p>
 
               {/* Feature chips */}
@@ -152,10 +173,20 @@ const Services = () => {
                   <button
                     id={`service-${service.tag.toLowerCase().replace(/\s+/g, "-")}-btn`}
                     onClick={() => navigate(service.route)}
-                    className="group/btn flex items-center gap-2 text-sm font-bold transition-all duration-200"
-                    style={{ color: service.accent }}
+                    className="group/btn flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95"
+                    style={{
+                      background: `${service.accent}15`,
+                      color: service.accent,
+                      border: `1px solid ${service.accent}30`,
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = `${service.accent}25`;
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = `${service.accent}15`;
+                    }}
                   >
-                    Try Now
+                    Abhi Try Karen 🚀
                     <ArrowRight
                       size={16}
                       className="transition-transform duration-200 group-hover/btn:translate-x-1.5"
@@ -186,7 +217,7 @@ const Services = () => {
               🚀 Ready to transform your farm?
             </h3>
             <p className="text-base" style={{ color: "rgba(255,255,255,0.7)" }}>
-              Join 50,000+ farmers already using KrishiConnect's AI tools.
+              Join farmers across India using KrishiConnect's AI tools.
             </p>
           </div>
           <button
