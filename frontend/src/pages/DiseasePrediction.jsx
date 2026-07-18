@@ -45,50 +45,68 @@ const DiseasePrediction = () => {
     setError("");
   };
 
-  // Fetch treatment from Gemini API — logic preserved exactly
+  const GEMINI_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash"];
+
+  const callGemini = async (model, prompt, apiKey) => {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      }
+    );
+    if (!response.ok) throw new Error(`Gemini API failed with status ${response.status}`);
+    return response.json();
+  };
+
+  const parseGeminiResponse = (text) => {
+    const descriptionMatch = text.match(/Description:\s*(.+?)(?=\nTreatments?:|$)/is);
+    const treatmentsText = text.split(/Treatments?:/i)[1];
+    const description = descriptionMatch ? descriptionMatch[1].trim() : "No description available.";
+    let treatments = [];
+    if (treatmentsText) {
+      treatments = treatmentsText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter((l) => l.startsWith("-") || /^\d+\./.test(l))
+        .map((l) => l.replace(/^[-\d.]\s*/, "").trim())
+        .filter((l) => l.length > 0);
+    }
+    if (treatments.length === 0) treatments = ["Consult a local agricultural expert for treatment options."];
+    return { description, treatment: treatments };
+  };
+
   const fetchGeminiTreatment = async (disease) => {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     const prompt = `Provide a concise description (1-2 sentences) of the plant disease "${disease}" and suggest exactly 3 bullet point treatments. Format the response as:\nDescription: [Your description]\nTreatments:\n- [Treatment 1]\n- [Treatment 2]\n- [Treatment 3]`;
 
     setGeminiLoading(true);
-
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      for (const model of GEMINI_MODELS) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const data = await callGemini(model, prompt, apiKey);
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error("No valid response from Gemini API");
+            return parseGeminiResponse(text);
+          } catch (err) {
+            const isRetryable = err.message.includes("503") || err.message.includes("429") || err.message.includes("500");
+            if (attempt < 2 && isRetryable) {
+              await new Promise((r) => setTimeout(r, (attempt + 1) * 1500));
+              continue;
+            }
+            if (model === GEMINI_MODELS[GEMINI_MODELS.length - 1] && attempt === 2) {
+              console.error("All Gemini models exhausted:", err.message);
+              return {
+                description: "Unable to fetch description.",
+                treatment: ["Consult a local agricultural expert for treatment options."],
+              };
+            }
+          }
         }
-      );
-
-      if (!response.ok) throw new Error(`Gemini API failed with status ${response.status}`);
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!text) throw new Error("No valid response from Gemini API");
-
-      const descriptionMatch = text.match(/Description:\s*(.+?)(?=\nTreatments?:|$)/is);
-      const treatmentsText = text.split(/Treatments?:/i)[1];
-
-      const description = descriptionMatch ? descriptionMatch[1].trim() : "No description available.";
-
-      let treatments = [];
-      if (treatmentsText) {
-        treatments = treatmentsText
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.startsWith("-") || /^\d+\./.test(line))
-          .map((line) => line.replace(/^[-\d.]\s*/, "").trim())
-          .filter((line) => line.length > 0);
       }
 
-      if (treatments.length === 0) treatments = ["Consult a local agricultural expert for treatment options."];
-
-      return { description, treatment: treatments };
-    } catch (error) {
-      console.error("Error fetching from Gemini API:", error);
       return {
         description: "Unable to fetch description.",
         treatment: ["Consult a local agricultural expert for treatment options."],
@@ -124,16 +142,22 @@ const DiseasePrediction = () => {
     }, 800);
 
     try {
+      const token = localStorage.getItem("authToken");
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("file", file);
 
-      const response = await fetch("/predict", { method: "POST", body: formData });
+      const response = await fetch("/api/features/disease-prediction", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
 
       if (!response.ok) throw new Error(`Prediction API failed with status ${response.status}`);
 
-      const predictionData = await response.json();
+      const json = await response.json();
+      const predictionData = json.data || json;
       const diseaseLabel = predictionData.prediction || "Unknown Disease";
-      let confidence = predictionData.confidence || 0;
+      let confidence = parseFloat(predictionData.confidence) || 0;
       if (confidence > 1) confidence = confidence / 100;
 
       if (confidence < 0.3) {

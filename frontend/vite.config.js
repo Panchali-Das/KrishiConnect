@@ -5,10 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/predict": {
-        target: "https://render-begins-musharraf.onrender.com",
+      "/api": {
+        target: "http://localhost:5000",
         changeOrigin: true,
-        secure: true,
       },
     },
   },
