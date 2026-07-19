@@ -1,5 +1,4 @@
 import HeroContent from "./HeroContent";
-import HeroCard from "./HeroCard";
 import tractorImg from "../Images/TractorImg.jpg";
 
 const Hero = ({ scrollToSection }) => {
@@ -26,9 +25,6 @@ const Hero = ({ scrollToSection }) => {
           <HeroContent scrollToSection={scrollToSection} />
         </div>
       </div>
-
-      {/* Floating Dashboard Card — positioned directly off the section, not the grid */}
-      <HeroCard />
 
       {/* Minimalistic Page Scroll Pointer */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 hidden md:block">
